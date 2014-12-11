@@ -1,13 +1,13 @@
 ESP8266 LwIP library
 ====================
 
-Сборка под Windows:
-1. Скачайте компилятор и SDK http://programs74.ru/get.php?file=EspressifESP8266DevKitX86
-2. Скачайте и установите MinGW (http://sourceforge.net/projects/mingw/files/Installer/). Запускаем mingw-get-setup.exe, в процессе установки выберите режим без GUI, то есть уберите галочку "...also install support for the graphical user interface".
-3. Скачайте http://programs74.ru/get.php?file=EspressifESP8266DevKitAddon (84Mb) набор моих скриптов для автоматизации установки дополнительных модулей для MinGW.
-4. Запустите из моего набора файл install-mingw-package.bat. Он установит основные модули для MinGW, установка должна пройти без ошибок.
-5. Запускаем консоль C:\MinGW\msys\1.0\msys.bat
-6. В консоле выполните:
+РЎР±РѕСЂРєР° РїРѕРґ Windows:
+1. РЎРєР°С‡Р°Р№С‚Рµ РєРѕРјРїРёР»СЏС‚РѕСЂ Рё SDK http://programs74.ru/get.php?file=EspressifESP8266DevKitX86
+2. РЎРєР°С‡Р°Р№С‚Рµ Рё СѓСЃС‚Р°РЅРѕРІРёС‚Рµ MinGW (http://sourceforge.net/projects/mingw/files/Installer/). Р—Р°РїСѓСЃРєР°РµРј mingw-get-setup.exe, РІ РїСЂРѕС†РµСЃСЃРµ СѓСЃС‚Р°РЅРѕРІРєРё РІС‹Р±РµСЂРёС‚Рµ СЂРµР¶РёРј Р±РµР· GUI, С‚Рѕ РµСЃС‚СЊ СѓР±РµСЂРёС‚Рµ РіР°Р»РѕС‡РєСѓ "...also install support for the graphical user interface".
+3. РЎРєР°С‡Р°Р№С‚Рµ http://programs74.ru/get.php?file=EspressifESP8266DevKitAddon (84Mb) РЅР°Р±РѕСЂ РјРѕРёС… СЃРєСЂРёРїС‚РѕРІ РґР»СЏ Р°РІС‚РѕРјР°С‚РёР·Р°С†РёРё СѓСЃС‚Р°РЅРѕРІРєРё РґРѕРїРѕР»РЅРёС‚РµР»СЊРЅС‹С… РјРѕРґСѓР»РµР№ РґР»СЏ MinGW.
+4. Р—Р°РїСѓСЃС‚РёС‚Рµ РёР· РјРѕРµРіРѕ РЅР°Р±РѕСЂР° С„Р°Р№Р» install-mingw-package.bat. РћРЅ СѓСЃС‚Р°РЅРѕРІРёС‚ РѕСЃРЅРѕРІРЅС‹Рµ РјРѕРґСѓР»Рё РґР»СЏ MinGW, СѓСЃС‚Р°РЅРѕРІРєР° РґРѕР»Р¶РЅР° РїСЂРѕР№С‚Рё Р±РµР· РѕС€РёР±РѕРє.
+5. Р—Р°РїСѓСЃРєР°РµРј РєРѕРЅСЃРѕР»СЊ C:\MinGW\msys\1.0\msys.bat
+6. Р’ РєРѕРЅСЃРѕР»Рµ РІС‹РїРѕР»РЅРёС‚Рµ:
 cd /c/Espressif/examples
 git clone https://github.com/CHERTS/esp8266-liblwip.git
 cd esp8266-liblwip
