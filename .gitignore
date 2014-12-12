@@ -3,7 +3,10 @@ build
 build-aux
 autom4te.cache
 #Files
+config.log
+config.status
 configure
+Makefile
 *.a
 *.in
 *.m4
