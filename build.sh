@@ -10,10 +10,7 @@ rm -f Makefile
 rm -f *.a
 rm -f *.in
 rm -f *.m4
-rm -f api/*.in
-rm -f app/*.in
-rm -f core/*.in
-rm -f netif/*.in
+rm -f src/*.in
 rm -f include/*.in
 
 autoreconf -i
