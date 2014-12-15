@@ -15,6 +15,11 @@ git clone https://github.com/CHERTS/esp8266-liblwip.git
 cd esp8266-liblwip
 sh build.sh
 ```
+8. Скопируйте новую библиотеку в каталог /c/Espressif/ESP8266_SDK/lib командой:<br>
+```
+cp build/src/liblwip.a ../../ESP8266_SDK/lib
+```
+
 --
 
 <b>Building on Windows:</b><br>
@@ -30,4 +35,8 @@ cd /c/Espressif/examples
 git clone https://github.com/CHERTS/esp8266-liblwip.git
 cd esp8266-liblwip
 sh build.sh
+```
+8. Copy the new library to the directory /c/Espressif/ESP8266_SDK/lib command:<br>
+```
+cp build/src/liblwip.a ../../ESP8266_SDK/lib
 ```
