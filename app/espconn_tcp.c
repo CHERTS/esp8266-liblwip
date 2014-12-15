@@ -7,6 +7,7 @@
  *
  * Modification history:
  *     2014/3/31, v1.0 create this file.
+ *     2014/12/13 corrected PV` (v1, v2)
 *******************************************************************************/
 
 #include "lwip/netif.h"
@@ -20,6 +21,7 @@
 
 #include "ets_sys.h"
 #include "os_type.h"
+//#include "os.h"
 #include "lwip/mem.h"
 #include "lwip/app/espconn_tcp.h"
 
@@ -36,6 +38,8 @@ static err_t
 espconn_server_recv(void *arg, struct tcp_pcb *pcb, struct pbuf *p, err_t err);
 static void
 espconn_server_close(void *arg, struct tcp_pcb *pcb);
+
+struct tcp_pcb * ICACHE_FLASH_ATTR find_tcpsrv_pcb(espconn_msg * ts_conn); // added PV`
 
 ///////////////////////////////common function/////////////////////////////////
 
@@ -117,9 +121,11 @@ espconn_tcp_disconnect_successful(void *arg)
 						espconn->proto.tcp->local_ip[1],espconn->proto.tcp->local_ip[2],
 						espconn->proto.tcp->local_ip[3],espconn->proto.tcp->local_port);
 			}
-			pcb = pdiscon_cb->pcommon.pcb;
-			tcp_arg(pcb, NULL);
-			tcp_err(pcb, NULL);
+			pcb = find_tcpsrv_pcb(pdiscon_cb); // added PV`
+			if(pcb != NULL) { // added PV`
+    			  tcp_arg(pcb, NULL);
+			  tcp_err(pcb, NULL);
+			}
 			/*delete TIME_WAIT State pcb after 2MSL time,for not all data received by application.*/
 //			if (pcb->state == TIME_WAIT){
 //				tcp_pcb_remove(&tcp_tw_pcbs,pcb);
@@ -205,14 +211,32 @@ void ICACHE_FLASH_ATTR espconn_tcp_disconnect(espconn_msg *pdiscon)
 {
 	if (pdiscon != NULL){
 		if (pdiscon->preverse != NULL)
-			espconn_server_close(pdiscon, pdiscon->pcommon.pcb);
+		        espconn_server_close(pdiscon, pdiscon->pcommon.pcb);
 		else
 			espconn_client_close(pdiscon, pdiscon->pcommon.pcb);
 	} else{
 		espconn_printf("espconn_server_disconnect err.\n");
 	}
 }
-
+/******************************************************************************
+ * FunctionName : find_pcb // added PV`
+ * Description  : поиск pcb в списках lwip
+ * Parameters   : struct  espconn_msg * ts_conn
+ * Returns      : *pcb or NULL
+*******************************************************************************/
+struct tcp_pcb * ICACHE_FLASH_ATTR find_tcpsrv_pcb(espconn_msg * ts_conn)
+{
+	struct tcp_pcb *pcb;
+	uint16 remote_port = ts_conn->pcommon.remote_port;
+	uint32 ip = (uint32)ts_conn->pcommon.remote_ip;
+	for(pcb = tcp_active_pcbs; pcb != NULL; pcb = pcb->next) {
+	  if((pcb->remote_port == remote_port)&&(pcb->remote_ip.addr == ip)) return pcb;
+	}
+	for(pcb = tcp_tw_pcbs; pcb != NULL; pcb = pcb->next) {
+		if((pcb->remote_port == remote_port)&&(pcb->remote_ip.addr == ip)) return pcb;
+	}
+	return NULL;
+}
 ///////////////////////////////client function/////////////////////////////////
 /******************************************************************************
  * FunctionName : espconn_close
@@ -224,16 +248,13 @@ static void ICACHE_FLASH_ATTR
 espconn_cclose_cb(void *arg)
 {
 	espconn_msg *pclose_cb = arg;
-
     if (pclose_cb == NULL) {
         return;
     }
+    struct tcp_pcb *pcb = find_tcpsrv_pcb(pclose_cb); // added PV`
+//    espconn_printf("espconn_close %d %d\n", pcb->state, pcb->nrtx);
 
-    struct tcp_pcb *pcb = pclose_cb->pcommon.pcb;
-
-    espconn_printf("espconn_close %d %d\n", pcb->state, pcb->nrtx);
-
-    if (pcb->state == TIME_WAIT || pcb->state == CLOSED) {
+    if ((pcb == NULL) || (pcb->state == TIME_WAIT) || (pcb->state == CLOSED)) { // corrected PV`
     	pclose_cb ->pespconn ->state = ESPCONN_CLOSE;
     	/*remove the node from the client's active connection list*/
     	espconn_list_delete(&plink_active, pclose_cb);
@@ -257,7 +278,6 @@ espconn_client_close(void *arg, struct tcp_pcb *pcb)
     espconn_msg *pclose = arg;
 
 	os_timer_disarm(&pclose->pcommon.ptimer);
-
 	tcp_recv(pcb, NULL);
 	err = tcp_close(pcb);
 	os_timer_setfn(&pclose->pcommon.ptimer, espconn_cclose_cb, pclose);
@@ -269,7 +289,7 @@ espconn_client_close(void *arg, struct tcp_pcb *pcb)
     } else {
         /* closing succeeded */
         tcp_sent(pcb, NULL);
-    }
+    };
 }
 
 /******************************************************************************
@@ -396,6 +416,7 @@ espconn_client_err(void *arg, err_t err)
     if (perr_cb != NULL) {
     	os_timer_disarm(&perr_cb->pcommon.ptimer);
         pcb = perr_cb->pcommon.pcb;
+        if(pcb == NULL) return;
         perr_cb->pespconn->state = ESPCONN_CLOSE;
         espconn_printf("espconn_client_err %d %d %d\n", pcb->state, pcb->nrtx, err);
 
@@ -537,9 +558,9 @@ espconn_sclose_cb(void *arg)
         return;
     }
 
-    struct tcp_pcb *pcb = psclose_cb ->pcommon.pcb;
-    espconn_printf("espconn_sclose_cb %d %d\n", pcb->state, pcb->nrtx);
-    if (pcb->state == CLOSED || pcb->state == TIME_WAIT) {
+    struct tcp_pcb *pcb = find_tcpsrv_pcb(psclose_cb); // added PV`
+//    espconn_printf("espconn_sclose_cb %d %d\n", pcb->state, pcb->nrtx);
+    if ((pcb == NULL) || (pcb->state == CLOSED) || (pcb->state == TIME_WAIT)) { // corrected PV`
     	psclose_cb ->pespconn ->state = ESPCONN_CLOSE;
 		/*remove the node from the server's active connection list*/
 		espconn_list_delete(&plink_active, psclose_cb);
@@ -564,8 +585,8 @@ espconn_server_close(void *arg, struct tcp_pcb *pcb)
 
 	os_timer_disarm(&psclose->pcommon.ptimer);
 
-    tcp_recv(pcb, NULL);
-    err = tcp_close(pcb);
+      tcp_recv(pcb, NULL);
+      err = tcp_close(pcb);
 	os_timer_setfn(&psclose->pcommon.ptimer, espconn_sclose_cb, psclose);
 	os_timer_arm(&psclose->pcommon.ptimer, TCP_FAST_INTERVAL, 0);
 
@@ -576,7 +597,7 @@ espconn_server_close(void *arg, struct tcp_pcb *pcb)
         /* closing succeeded */
         tcp_poll(pcb, NULL, 0);
         tcp_sent(pcb, NULL);
-    }
+    };
 }
 
 /******************************************************************************
@@ -791,6 +812,7 @@ espconn_tcp_accept(void *arg, struct tcp_pcb *pcb, err_t err)
     espconn_msg *paccept = NULL;
     remot_info *pinfo = NULL;
     LWIP_UNUSED_ARG(err);
+    if(system_get_free_heap_size()<-8192) return ERR_MEM;
 
     paccept = (espconn_msg *)os_zalloc(sizeof(espconn_msg));
     tcp_arg(pcb, paccept);

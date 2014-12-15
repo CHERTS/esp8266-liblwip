@@ -7,6 +7,7 @@
  *
  * Modification history:
  *     2014/3/31, v1.0 create this file.
+ *     2014/12/13 corrected PV` (v1, v2)
 *******************************************************************************/
 
 #include "lwip/netif.h"
@@ -17,6 +18,7 @@
 #include "lwip/init.h"
 #include "ets_sys.h"
 #include "os_type.h"
+//#include "os.h"
 #include "lwip/mem.h"
 
 #include "lwip/app/espconn_tcp.h"
@@ -301,7 +303,7 @@ uint8 ICACHE_FLASH_ATTR espconn_tcp_get_max_con(void)
 *******************************************************************************/
 sint8 ICACHE_FLASH_ATTR espconn_tcp_set_max_con(uint8 num)
 {
-	if (num == 0)
+	if ((num == 0) || (num > 5)) // corrected PV` -> remot_info premot[5] !!!
 		return ESPCONN_ARG;
 
 	MEMP_NUM_TCP_PCB = num;
@@ -567,6 +569,7 @@ sint8 ICACHE_FLASH_ATTR espconn_regist_time(struct espconn *espconn, uint32 inte
 		link_timer = interval;
 		os_printf("espconn_regist_time %d\n", link_timer);
 	}
+	return ESPCONN_OK; // added PV` (v2)
 }
 
 /******************************************************************************
@@ -658,7 +661,7 @@ uint32 espconn_port(void)
  * Description  : Resolve a hostname (string) into an IP address.
  * Parameters   : pespconn -- espconn to resolve a hostname
  *                hostname -- the hostname that is to be queried
- *                addr -- pointer to a ip_addr_t where to store the address if 
+ *                addr -- pointer to a ip_addr_t where to store the address if
  *                        it is already cached in the dns_table (only valid if
  *                        ESPCONN_OK is returned!)
  *                found -- a callback function to be called on success, failure
