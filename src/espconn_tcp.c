@@ -411,12 +411,12 @@ espconn_client_err(void *arg, err_t err)
 {
 	espconn_msg *perr_cb = arg;
 	struct tcp_pcb *pcb = NULL;
-    LWIP_UNUSED_ARG(err);
+	LWIP_UNUSED_ARG(err);
 
     if (perr_cb != NULL) {
     	os_timer_disarm(&perr_cb->pcommon.ptimer);
         pcb = perr_cb->pcommon.pcb;
-        if(pcb == NULL) return;
+        //if(pcb == NULL) return;
         perr_cb->pespconn->state = ESPCONN_CLOSE;
         espconn_printf("espconn_client_err %d %d %d\n", pcb->state, pcb->nrtx, err);
 
