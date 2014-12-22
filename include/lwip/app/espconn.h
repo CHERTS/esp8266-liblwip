@@ -105,15 +105,23 @@ struct espconn {
 	void *reverse;
 };
 
+enum espconn_option{
+	ESPCONN_REUSEADDR = 1,
+	ESPCONN_END
+};
+
 typedef struct _comon_pkt{
 	void *pcb;
 	int remote_port;
 	uint8 remote_ip[4];
 	uint8 *ptrbuf;
 	uint16 cntr;
+	uint16 write_len;
+	uint16 write_total;
 	sint8  err;
 	uint32 timeout;
 	uint32 recv_check;
+	enum espconn_option espconn_opt;
 	os_timer_t ptimer;
 }comon_pkt;
 
@@ -338,6 +346,15 @@ extern sint8 espconn_regist_disconcb(struct espconn *espconn, espconn_connect_ca
 *******************************************************************************/
 
 extern uint32 espconn_port(void);
+
+/******************************************************************************
+ * FunctionName : espconn_set_opt
+ * Description  : access port value for client so that we don't end up bouncing
+ *                all connections at the same time .
+ * Parameters   : none
+ * Returns      : access port value
+*******************************************************************************/
+extern sint8 espconn_set_opt(struct espconn *espconn, uint8 opt);
 
 /******************************************************************************
  * FunctionName : espconn_gethostbyname
