@@ -11,7 +11,6 @@
 
 #include "ets_sys.h"
 #include "os_type.h"
-//#include "os.h"
 
 #include "lwip/inet.h"
 #include "lwip/err.h"
@@ -171,34 +170,26 @@ espconn_udp_recv(void *arg, struct udp_pcb *upcb, struct pbuf *p,
 	precv->pespconn->proto.udp->local_ip[3] = ip4_addr4_16(&upcb->local_ip);
 
     if (p != NULL) {
-//        q = p;
+        q = p;
 
-//        while (q != NULL) {
-//            pdata = (u8_t *)os_zalloc(q ->len + 1);
-//            length = pbuf_copy_partial(q, pdata, q ->len, 0);
-//
-//            LWIP_DEBUGF(ESPCONN_UDP_DEBUG, ("espconn_udp_server_recv %d %x\n", __LINE__, length));
-//            precv->pcommon.pcb = upcb;
-//
-//            if (length != 0) {
-//                if (precv->pespconn->recv_callback != NULL) {
-//                    precv->pespconn->recv_callback(precv->pespconn, pdata, length);
-//                }
-//            }
-//
-//            q = q->next;
-//            os_free(pdata);
-//        }
-    	pdata = (u8_t *)os_zalloc(p ->tot_len + 1);
-    	length = pbuf_copy_partial(p, pdata, p ->tot_len, 0);
-    	precv->pcommon.pcb = upcb;
+        while (q != NULL) {
+            pdata = (u8_t *)os_zalloc(q ->len + 1);
+            length = pbuf_copy_partial(q, pdata, q ->len, 0);
+
+            LWIP_DEBUGF(ESPCONN_UDP_DEBUG, ("espconn_udp_server_recv %d %x\n", __LINE__, length));
+            precv->pcommon.pcb = upcb;
+
+            if (length != 0) {
+                if (precv->pespconn->recv_callback != NULL) {
+                    precv->pespconn->recv_callback(precv->pespconn, pdata, length);
+                }
+            }
+
+            q = q->next;
+            os_free(pdata);
+        }
+
         pbuf_free(p);
-		if (length != 0) {
-			if (precv->pespconn->recv_callback != NULL) {
-				precv->pespconn->recv_callback(precv->pespconn, pdata, length);
-			}
-		}
-		os_free(pdata);
     } else {
         return;
     }

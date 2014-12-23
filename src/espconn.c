@@ -6,7 +6,8 @@
  * Description: espconn interface for user
  *
  * Modification history:
- *     2014/3/31, v1.0 create this file. Corrected PV` 2014/12/20, v1.0
+ *     2014/3/31, v1.0 create this file.
+ *     2014/12/13 corrected PV` (v1, v2)
 *******************************************************************************/
 
 #include "lwip/netif.h"
@@ -23,8 +24,6 @@
 #include "lwip/app/espconn_tcp.h"
 #include "lwip/app/espconn_udp.h"
 #include "lwip/app/espconn.h"
-
-#include "user_interface.h"
 
 espconn_msg *plink_active = NULL;
 espconn_msg *pserver_list = NULL;
@@ -165,9 +164,8 @@ bool ICACHE_FLASH_ATTR espconn_find_connection(struct espconn *pespconn, espconn
 sint8 ICACHE_FLASH_ATTR
 espconn_connect(struct espconn *espconn)
 {
-	struct ip_addr ipaddr;
+	struct netif *eagle_netif;
 	struct ip_info ipinfo;
-	uint8 connect_status = 0;
 	sint8 value = ESPCONN_OK;
 	espconn_msg *plist = NULL;
 
@@ -187,24 +185,14 @@ espconn_connect(struct espconn *espconn)
     		return ESPCONN_RTE;
     	}
     } else if(wifi_get_opmode() == ESPCONN_AP_STA){
-    	IP4_ADDR(&ipaddr, espconn->proto.tcp->remote_ip[0],
-    	    	    		espconn->proto.tcp->remote_ip[1],
-    	    	    		espconn->proto.tcp->remote_ip[2],
-    	    	    		espconn->proto.tcp->remote_ip[3]);
-    	ipaddr.addr <<= 8;
-    	wifi_get_ip_info(AP_NETIF,&ipinfo);
-    	ipinfo.ip.addr <<= 8;
-    	espconn_printf("softap_addr = %x, remote_addr = %x\n", ipinfo.ip.addr, ipaddr.addr);
+//    	wifi_get_ip_info(STA_NETIF,&ipinfo);
+//    	if (ipinfo.ip.addr == 0){
+//    		return ESPCONN_RTE;
+//    	}
 
-    	if (ipaddr.addr != ipinfo.ip.addr){
-    		connect_status = wifi_station_get_connect_status();
-			if (connect_status == STATION_GOT_IP){
-				wifi_get_ip_info(STA_NETIF,&ipinfo);
-				if (ipinfo.ip.addr == 0)
-					return ESPCONN_RTE;
-			} else {
-				return connect_status;
-			}
+    	wifi_get_ip_info(AP_NETIF,&ipinfo);
+    	if (ipinfo.ip.addr == 0){
+    		return ESPCONN_RTE;
     	}
     }
 
@@ -272,9 +260,9 @@ espconn_sent(struct espconn *espconn, uint8 *psent, uint16 length)
     value = espconn_find_connection(espconn, &pnode);
     switch (espconn ->type) {
         case ESPCONN_TCP:
-            if (value && (pnode->pcommon.write_len == pnode->pcommon.write_total)){
-           		espconn_tcp_sent(pnode, psent, length);
-            }else
+            if (value)
+            	espconn_tcp_sent(pnode, psent, length);
+            else
             	return ESPCONN_ARG;
             break;
 
@@ -315,7 +303,7 @@ uint8 ICACHE_FLASH_ATTR espconn_tcp_get_max_con(void)
 *******************************************************************************/
 sint8 ICACHE_FLASH_ATTR espconn_tcp_set_max_con(uint8 num)
 {
-	if ((num == 0) || (num > 5)) // corrected PV` -> remot_info premot[5] -> max 5!!!
+	if ((num == 0) || (num > 5)) // corrected PV` -> remot_info premot[5] !!!
 		return ESPCONN_ARG;
 
 	MEMP_NUM_TCP_PCB = num;
@@ -483,7 +471,7 @@ espconn_get_connection_info(struct espconn *pespconn, remot_info **pcon_info, ui
 	switch (pespconn->type){
 		case ESPCONN_TCP:
 			while(plist != NULL){
-				if ((plist->pespconn->type == ESPCONN_TCP) && (plist->preverse == pespconn)){
+				if ((plist->pespconn->type == ESPCONN_TCP) && (plist->preverse != NULL)){
 					switch (typeflags){
 						case ESPCONN_SSL:
 							if (plist->pssl != NULL){
@@ -580,7 +568,7 @@ sint8 ICACHE_FLASH_ATTR espconn_regist_time(struct espconn *espconn, uint32 inte
 	} else {
 		link_timer = interval;
 		os_printf("espconn_regist_time %d\n", link_timer);
-		return ESPCONN_OK;
+		return ESPCONN_OK; // added PV` (v2)
 	}
 }
 
@@ -608,32 +596,6 @@ espconn_disconnect(struct espconn *espconn)
     	return ESPCONN_OK;
     } else
     	return ESPCONN_ARG;
-}
-
-/******************************************************************************
- * FunctionName : espconn_set_opt
- * Description  : access port value for client so that we don't end up bouncing
- *                all connections at the same time .
- * Parameters   : none
- * Returns      : access port value
-*******************************************************************************/
-sint8 ICACHE_FLASH_ATTR
-espconn_set_opt(struct espconn *espconn, uint8 opt)
-{
-	espconn_msg *pnode = NULL;
-	bool value = false;
-
-	if (espconn == NULL || opt > ESPCONN_END) {
-		return ESPCONN_ARG;;
-	} else if (espconn->type != ESPCONN_TCP)
-		return ESPCONN_ARG;
-
-	value = espconn_find_connection(espconn, &pnode);
-	if (value) {
-		pnode->pcommon.espconn_opt = opt;
-		return ESPCONN_OK;
-	} else
-		return ESPCONN_ARG;
 }
 
 /******************************************************************************

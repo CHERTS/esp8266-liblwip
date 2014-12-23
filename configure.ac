@@ -31,7 +31,7 @@ AC_CHECK_FUNCS([memset])
 CPPFLAGS="${CPPFLAGS:+$CPPFLAGS }-I\${top_srcdir}/include"
 CPPFLAGS="${CPPFLAGS:+$CPPFLAGS }-I\${top_srcdir}/../../ESP8266_SDK/include"
 CPPFLAGS="${CPPFLAGS:+$CPPFLAGS }-Os -g -O2 -Wpointer-arith -Wundef -Werror -Wl,-EL -fno-inline-functions -nostdlib -mlongcalls -mtext-section-literals"
-CPPFLAGS="${CPPFLAGS:+$CPPFLAGS }-D__ets__ -DLWIP_OPEN_SRC=1 -DPBUF_RSV_FOR_WLAN=1 -DICACHE_FLASH=1 -DEBUF_LWIP=1 -DUSE_DNS=1"
+CPPFLAGS="${CPPFLAGS:+$CPPFLAGS }-D__ets__ -DLWIP_OPEN_SRC=1 -DPBUF_RSV_FOR_WLAN=1 -DICACHE_FLASH=1 -DEBUF_LWIP=1"
 
 AC_CONFIG_FILES([Makefile
                  include/Makefile
