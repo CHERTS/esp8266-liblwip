@@ -305,7 +305,7 @@
  * (requires NO_SYS==0)
  */
 #ifndef MEMP_NUM_SYS_TIMEOUT
-#define MEMP_NUM_SYS_TIMEOUT            6
+#define MEMP_NUM_SYS_TIMEOUT            8
 #endif
 
 /**
@@ -531,7 +531,7 @@
  * in this time, the whole packet is discarded.
  */
 #ifndef IP_REASS_MAXAGE
-#define IP_REASS_MAXAGE                 0
+#define IP_REASS_MAXAGE                 3
 #endif
 
 /**
@@ -541,7 +541,7 @@
  * packets even if the maximum amount of fragments is enqueued for reassembly!
  */
 #ifndef IP_REASS_MAX_PBUFS
-#define IP_REASS_MAX_PBUFS              0
+#define IP_REASS_MAX_PBUFS              10
 #endif
 
 /**
@@ -630,7 +630,7 @@
  * LWIP_RAW==1: Enable application layer to hook into the IP layer itself.
  */
 #ifndef LWIP_RAW
-#define LWIP_RAW                        0
+#define LWIP_RAW                        1
 #endif
 
 /**

@@ -113,7 +113,7 @@ u32_t            tcp_update_rcv_ann_wnd(struct tcp_pcb *pcb)ICACHE_FLASH_ATTR;
 #define TCP_HLEN 20
 
 #ifndef TCP_TMR_INTERVAL
-#define TCP_TMR_INTERVAL       250  /* The TCP timer interval in milliseconds. */
+#define TCP_TMR_INTERVAL       125  /* The TCP timer interval in milliseconds. */
 #endif /* TCP_TMR_INTERVAL */
 
 #ifndef TCP_FAST_INTERVAL
@@ -156,14 +156,14 @@ u32_t            tcp_update_rcv_ann_wnd(struct tcp_pcb *pcb)ICACHE_FLASH_ATTR;
 #endif
 PACK_STRUCT_BEGIN
 struct tcp_hdr {
-  PACK_STRUCT_FIELD(u16_t src);				//Ô´¶Ë¿Ú
-  PACK_STRUCT_FIELD(u16_t dest);				//Ä¿µÄ¶Ë¿Ú
-  PACK_STRUCT_FIELD(u32_t seqno);			//ÐòºÅ
-  PACK_STRUCT_FIELD(u32_t ackno);			//Ó¦´ðÐòºÅ
-  PACK_STRUCT_FIELD(u16_t _hdrlen_rsvd_flags);//Ê×²¿³¤¶È+±£ÁôÎ»+±êÖ¾Î»
-  PACK_STRUCT_FIELD(u16_t wnd);				//´°¿Ú´óÐ¡
-  PACK_STRUCT_FIELD(u16_t chksum);			//Ð£ÑéºÍ
-  PACK_STRUCT_FIELD(u16_t urgp);				//½ô¼±Ö¸Õë
+  PACK_STRUCT_FIELD(u16_t src);				//Ô´ï¿½Ë¿ï¿½
+  PACK_STRUCT_FIELD(u16_t dest);				//Ä¿ï¿½Ä¶Ë¿ï¿½
+  PACK_STRUCT_FIELD(u32_t seqno);			//ï¿½ï¿½ï¿½
+  PACK_STRUCT_FIELD(u32_t ackno);			//Ó¦ï¿½ï¿½ï¿½ï¿½ï¿½
+  PACK_STRUCT_FIELD(u16_t _hdrlen_rsvd_flags);//ï¿½×²ï¿½ï¿½ï¿½ï¿½ï¿½+ï¿½ï¿½ï¿½ï¿½Î»+ï¿½ï¿½Ö¾Î»
+  PACK_STRUCT_FIELD(u16_t wnd);				//ï¿½ï¿½ï¿½Ú´ï¿½Ð¡
+  PACK_STRUCT_FIELD(u16_t chksum);			//Ð£ï¿½ï¿½ï¿½
+  PACK_STRUCT_FIELD(u16_t urgp);				//ï¿½ï¿½ï¿½ï¿½Ö¸ï¿½ï¿½
 } PACK_STRUCT_STRUCT;
 PACK_STRUCT_END
 #ifdef PACK_STRUCT_USE_INCLUDES

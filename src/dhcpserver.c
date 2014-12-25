@@ -3,6 +3,7 @@
 #include "lwip/pbuf.h"
 #include "lwip/udp.h"
 #include "lwip/mem.h"
+//#include "crypto/common.h"
 #include "osapi.h"
 #include "lwip/app/dhcpserver.h"
 
@@ -144,8 +145,15 @@ static uint8_t* ICACHE_FLASH_ATTR add_offer_options(uint8_t *optptr)
 	    *optptr++ = ip4_addr3( &ipadd);
 	    *optptr++ = ip4_addr4( &ipadd);
 
+#ifdef USE_DNS
 	    *optptr++ = DHCP_OPTION_DNS_SERVER;
-	    *optptr++ = 12;  
+	    *optptr++ = 4;
+	    *optptr++ = ip4_addr1( &ipadd);
+		*optptr++ = ip4_addr2( &ipadd);
+		*optptr++ = ip4_addr3( &ipadd);
+		*optptr++ = ip4_addr4( &ipadd);
+#endif
+
 #ifdef CLASS_B_NET
         *optptr++ = DHCP_OPTION_BROADCAST_ADDRESS;
         *optptr++ = 4;  
@@ -545,23 +553,23 @@ static sint16_t ICACHE_FLASH_ATTR parse_msg(struct dhcps_msg *m, u16_t len)
          	 * ��¼��ǰ��xid���ﴦ���?
          	 * �˺�ΪDHCP�ͻ����������û�ͳһ��ȡIPʱ��
          	*/
-	        if((old_xid[0] == 0) &&
-	           (old_xid[1] == 0) &&
-	           (old_xid[2] == 0) &&
-	           (old_xid[3] == 0)){
-	            /* 
-	             * old_xidδ��¼�κ����?
-	             * �϶��ǵ�һ��ʹ��
-	            */
-	            os_memcpy((char *)old_xid, (char *)m->xid, sizeof(m->xid));
-	        }else{
-	            /*
-	             * ���δ����DHCP msg��Я���xid���ϴμ�¼�Ĳ�ͬ��
-	             * �϶�Ϊ��ͬ��DHCP�ͻ��˷��ͣ���ʱ����Ҫ����Ŀͻ���IP
-	             * ���� 192.168.4.100(0x6404A8C0) <--> 192.168.4.200(0xC804A8C0)
-	             * 
-	            */
-	            if(os_memcmp((char *)old_xid, (char *)m->xid, sizeof(m->xid)) != 0){
+//	        if((old_xid[0] == 0) &&
+//	           (old_xid[1] == 0) &&
+//	           (old_xid[2] == 0) &&
+//	           (old_xid[3] == 0)){
+//	            /*
+//	             * old_xidδ��¼�κ����?
+//	             * �϶��ǵ�һ��ʹ��
+//	            */
+//	            os_memcpy((char *)old_xid, (char *)m->xid, sizeof(m->xid));
+//	        }else{
+//	            /*
+//	             * ���δ����DHCP msg��Я���xid���ϴμ�¼�Ĳ�ͬ��
+//	             * �϶�Ϊ��ͬ��DHCP�ͻ��˷��ͣ���ʱ����Ҫ����Ŀͻ���IP
+//	             * ���� 192.168.4.100(0x6404A8C0) <--> 192.168.4.200(0xC804A8C0)
+//	             *
+//	            */
+//	            if(os_memcmp((char *)old_xid, (char *)m->xid, sizeof(m->xid)) != 0){
 	                /*
                  	 * ��¼���ε�xid�ţ�ͬʱ�����IP����
                  	*/
@@ -569,77 +577,48 @@ static sint16_t ICACHE_FLASH_ATTR parse_msg(struct dhcps_msg *m, u16_t len)
 	                os_memcpy((char *)old_xid, (char *)m->xid, sizeof(m->xid));
 
 	                {
-						struct station_info *station = wifi_softap_get_station_info();
-						struct station_info *next_station;
-						struct station_info *back_station = station;
-						uint8 find = 0;
-
 						struct dhcps_pool *pdhcps_pool = NULL;
 						list_node *pnode = NULL;
 						list_node *pback_node = NULL;
 
-						while(station) {
-							if (os_memcmp(station->bssid, m->chaddr, 6) == 0) {
-								find = 1;
-								break;
-							}
-							next_station = STAILQ_NEXT(station, next);
-							station = next_station;
-						}
-
-						if (find == 0) {
-							station = back_station;
-							while(station) {
-								if (station->ip.addr == client_address_plus.addr) {
-									addr_tmp.addr =  htonl(client_address_plus.addr);
-									addr_tmp.addr++;
-									client_address_plus.addr = htonl(addr_tmp.addr);
-									station = back_station;
-									continue;
-								}
-								next_station = STAILQ_NEXT(station, next);
-								station = next_station;
-							}
-
-							if (wifi_softap_set_station_info(m->chaddr, &client_address_plus) == false) {
-								return 0;
-							}
-
-							client_address.addr = client_address_plus.addr;
+						POOL_START:
+						client_address.addr = client_address_plus.addr;
 //							addr_tmp.addr =  htonl(client_address_plus.addr);
 //							addr_tmp.addr++;
 //							client_address_plus.addr = htonl(addr_tmp.addr);
-							for (pback_node = plist; pback_node != NULL;pback_node = pback_node->pnext) {
-								pdhcps_pool = pback_node->pnode;
-								if (os_memcmp(pdhcps_pool->mac, m->chaddr, sizeof(pdhcps_pool->mac)) == 0){
+						for (pback_node = plist; pback_node != NULL;pback_node = pback_node->pnext) {
+							pdhcps_pool = pback_node->pnode;
+							if (os_memcmp(pdhcps_pool->mac, m->chaddr, sizeof(pdhcps_pool->mac)) == 0){
 //									os_printf("the same device request ip\n");
-									client_address.addr = pdhcps_pool->ip.addr;
-									pdhcps_pool->lease_timer = DHCPS_LEASE_TIMER;
-									goto POOL_CHECK;
-								} else if (pdhcps_pool->ip.addr == client_address_plus.addr){
+								client_address.addr = pdhcps_pool->ip.addr;
+								pdhcps_pool->lease_timer = DHCPS_LEASE_TIMER;
+								goto POOL_CHECK;
+							} else if (pdhcps_pool->ip.addr == client_address_plus.addr){
 //									client_address.addr = client_address_plus.addr;
-									addr_tmp.addr = htonl(client_address_plus.addr);
-									addr_tmp.addr++;
-									client_address_plus.addr = htonl(addr_tmp.addr);
-									client_address.addr = client_address_plus.addr;
-								}
+//									os_printf("the ip addr has been request\n");
+								addr_tmp.addr = htonl(client_address_plus.addr);
+								addr_tmp.addr++;
+								client_address_plus.addr = htonl(addr_tmp.addr);
+								client_address.addr = client_address_plus.addr;
 							}
-							pdhcps_pool = (struct dhcps_pool *)os_zalloc(sizeof(struct dhcps_pool));
-							pdhcps_pool->ip.addr = client_address.addr;
-							os_memcpy(pdhcps_pool->mac, m->chaddr, sizeof(pdhcps_pool->mac));
-							pdhcps_pool->lease_timer = DHCPS_LEASE_TIMER;
-							pnode = (list_node *)os_zalloc(sizeof(list_node ));
-							pnode->pnode = pdhcps_pool;
-							node_insert_to_list(&plist,pnode);
+						}
+						pdhcps_pool = (struct dhcps_pool *)os_zalloc(sizeof(struct dhcps_pool));
+						pdhcps_pool->ip.addr = client_address.addr;
+						os_memcpy(pdhcps_pool->mac, m->chaddr, sizeof(pdhcps_pool->mac));
+						pdhcps_pool->lease_timer = DHCPS_LEASE_TIMER;
+						pnode = (list_node *)os_zalloc(sizeof(list_node ));
+						pnode->pnode = pdhcps_pool;
+						node_insert_to_list(&plist,pnode);
 
-							POOL_CHECK:
-							if (client_address_plus.addr > dhcps_lease.end_ip)
-								client_address_plus.addr = dhcps_lease.start_ip;
-						} else {
-							client_address.addr = station->ip.addr;
+						POOL_CHECK:
+						if ((client_address_plus.addr > dhcps_lease.end_ip) || (ip_addr_isany(&client_address))){
+							client_address_plus.addr = dhcps_lease.start_ip;
+							goto POOL_START;
 						}
 
-						wifi_softap_free_station_info();
+                        if (wifi_softap_set_station_info(m->chaddr, &client_address) == false) {
+							return 0;
+						}
 					}
 
 #if DHCPS_DEBUG
@@ -647,9 +626,9 @@ static sint16_t ICACHE_FLASH_ATTR parse_msg(struct dhcps_msg *m, u16_t len)
 	                os_printf("dhcps: client_address.addr = %x\n", client_address.addr);
 #endif
 	               
-	            }
+//	            }
 	            
-	        }
+//	        }
                     
 	        return parse_options(&m->options[4], len);
 	    }
@@ -770,7 +749,7 @@ static void ICACHE_FLASH_ATTR wifi_softap_init_dhcps_lease(uint32 ip)
 		if (local_ip >= 0x80)
 			local_ip -= DHCPS_MAX_LEASE;
 		else
-			local_ip += DHCPS_MAX_LEASE;
+			local_ip ++;
 
 		os_bzero(&dhcps_lease, sizeof(dhcps_lease));
 		dhcps_lease.start_ip = softap_ip | local_ip;
@@ -807,6 +786,18 @@ void ICACHE_FLASH_ATTR dhcps_stop(void)
 {
 	udp_disconnect(pcb_dhcps);
 	udp_remove(pcb_dhcps);
+	list_node *pnode = NULL;
+	list_node *pback_node = NULL;
+	pnode = plist;
+	while (pnode != NULL) {
+		pback_node = pnode;
+		pnode = pback_node->pnext;
+		node_remove_from_list(&plist, pback_node);
+		os_free(pback_node->pnode);
+		pback_node->pnode = NULL;
+		os_free(pback_node);
+		pback_node = NULL;
+	}
 }
 
 bool ICACHE_FLASH_ATTR wifi_softap_set_dhcps_lease(struct dhcps_lease *please)
